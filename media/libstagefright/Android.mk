@@ -101,9 +101,11 @@ LOCAL_C_INCLUDES:= \
         $(TOP)/system/core/include
 
 ifeq ($(TARGET_BOARD_PLATFORM),msm7x27)
-        LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display_legacy/libqdutils
+        LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display_legacy/libgralloc \
+	$(TOP)/hardware/qcom/display_legacy/libqdutils
 else
-        LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display/libqdutils
+        LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display/libgralloc \
+	$(TOP)/hardware/qcom/display/libqdutils
 endif
 
 ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
