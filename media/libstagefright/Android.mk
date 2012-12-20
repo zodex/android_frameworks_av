@@ -96,7 +96,9 @@ LOCAL_C_INCLUDES:= \
         $(TOP)/frameworks/native/include/media/openmax \
         $(TOP)/external/flac/include \
         $(TOP)/external/tremolo \
-        $(TOP)/external/openssl/include
+        $(TOP)/external/openssl/include \
+        $(TOP)/hardware/qcom/media/mm-core/inc \
+        $(TOP)/system/core/include
 
 ifeq ($(TARGET_BOARD_PLATFORM),msm7x27)
         LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display_legacy/libqdutils
