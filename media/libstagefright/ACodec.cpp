@@ -46,7 +46,6 @@
 #include <OMX_QCOMExtns.h>
 #include <gralloc_priv.h>
 #include <cutils/properties.h>
-#include <qcom_ui.h>
 
 //Smmoth streaming settings
 //Max resolution 1080p

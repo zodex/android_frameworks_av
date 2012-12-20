@@ -102,13 +102,15 @@ struct OMXCodec : public MediaSource,
         kDecoderLiesAboutNumberOfChannels     = 256,
         kInputBufferSizesAreBogus             = 512,
         kSupportsMultipleFramesPerInputBuffer = 1024,
-        kRequiresLargerEncoderOutputBuffer    = 2048,
-        kOutputBuffersAreUnreadable           = 4096,
+        kAvoidMemcopyInputRecordingFrames     = 2048,
+        kRequiresLargerEncoderOutputBuffer    = 4096,
+        kOutputBuffersAreUnreadable           = 8192,
 #ifdef QCOM_HARDWARE
         kRequiresGlobalFlush                  = 0x20000000, // 2^29
         kRequiresWMAProComponent              = 0x40000000, //2^30
 #endif
     };
+
 
     struct CodecNameAndQuirks {
         String8 mName;
