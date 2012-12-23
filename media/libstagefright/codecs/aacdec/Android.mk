@@ -36,7 +36,9 @@ ifeq ($(AAC_LIBRARY), fraunhofer)
 
 else # pv
 
-  LOCAL_SRC_FILES := \
+include $(CLEAR_VARS)
+  
+LOCAL_SRC_FILES := \
           analysis_sub_band.cpp \
           apply_ms_synt.cpp \
           apply_tns.cpp \
