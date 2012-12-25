@@ -107,6 +107,10 @@ void CameraService::onFirstRef()
     }
     else {
         mNumberOfCameras = mModule->get_number_of_cameras();
+#ifdef ECLAIR_LIBCAMERA
+        ALOGE("Number of cameras=%d", mNumberOfCameras);
+        if (mNumberOfCameras == 0) mNumberOfCameras = 1;
+#endif
         if (mNumberOfCameras > MAX_CAMERAS) {
             ALOGE("Number of cameras(%d) > MAX_CAMERAS(%d).",
                     mNumberOfCameras, MAX_CAMERAS);
@@ -154,6 +158,9 @@ sp<ICamera> CameraService::connect(
     int callingPid = getCallingPid();
     sp<CameraHardwareInterface> hardware = NULL;
 
+#ifdef ECLAIR_LIBCAMERA
+    LOG1("Number of cameras=%d", mNumberOfCameras);
+#endif
     LOG1("CameraService::connect E (pid %d, id %d)", callingPid, cameraId);
 
     if (!mModule) {
@@ -1041,6 +1048,7 @@ void CameraService::Client::disableMsgType(int32_t msgType) {
 
 #define CHECK_MESSAGE_INTERVAL 10 // 10ms
 bool CameraService::Client::lockIfMessageWanted(int32_t msgType) {
+#ifndef ECLAIR_LIBCAMERA
     int sleepCount = 0;
     while (mMsgEnabled & msgType) {
         if (mLock.tryLock() == NO_ERROR) {
@@ -1056,6 +1064,7 @@ bool CameraService::Client::lockIfMessageWanted(int32_t msgType) {
         usleep(CHECK_MESSAGE_INTERVAL * 1000);
     }
     ALOGW("lockIfMessageWanted(%d): dropped unwanted message", msgType);
+#endif
     return false;
 }
 
