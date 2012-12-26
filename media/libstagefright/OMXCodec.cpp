@@ -2066,7 +2066,7 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
 #ifndef USE_SAMSUNG_COLORFORMAT
 
 #ifdef QCOM_ICS_COMPAT
-    int format = (eColorFormat ==
+    int format = (def.format.video.eColorFormat ==
                   OMX_QCOM_COLOR_FormatYUV420PackedSemiPlanar64x32Tile2m8ka)?
                  HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED : def.format.video.eColorFormat;
 #endif
