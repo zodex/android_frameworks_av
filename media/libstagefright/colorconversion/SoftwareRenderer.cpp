@@ -26,14 +26,13 @@
 #include <ui/GraphicBufferMapper.h>
 #include <gui/ISurfaceTexture.h>
 
-#if defined(QCOM_LEGACY_OMX) && !defined(MISSING_GRALLOC_BUFFERS)
+#ifdef QCOM_LEGACY_OMX
 #include <gralloc_priv.h>
 #endif
 
 namespace android {
 
 #ifdef QCOM_HARDWARE
-static const int QOMX_COLOR_FormatYUV420PackedSemiPlanar64x32Tile2m8ka = 0x7FA30C03;
 static const int OMX_QCOM_COLOR_FormatYVU420SemiPlanar = 0x7FA30C00;
 #endif
 
@@ -86,7 +85,7 @@ SoftwareRenderer::SoftwareRenderer(
 
             // fall through.
         }
-        
+
 #ifdef QCOM_LEGACY_OMX
         case OMX_QCOM_COLOR_FormatYVU420SemiPlanar:
         {
@@ -131,7 +130,7 @@ SoftwareRenderer::SoftwareRenderer(
             mNativeWindow.get(),
             GRALLOC_USAGE_SW_READ_NEVER | GRALLOC_USAGE_SW_WRITE_OFTEN
             | GRALLOC_USAGE_HW_TEXTURE | GRALLOC_USAGE_EXTERNAL_DISP
-#if defined(QCOM_LEGACY_OMX) && !defined(MISSING_GRALLOC_BUFFERS)
+#ifdef QCOM_LEGACY_OMX
             | GRALLOC_USAGE_PRIVATE_ADSP_HEAP | GRALLOC_USAGE_PRIVATE_UNCACHED
 #endif
             ));
