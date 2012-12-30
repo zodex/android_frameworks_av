@@ -64,7 +64,7 @@
 #include <sec_format.h>
 #endif
 
-#ifdef QCOM_LEGACY_OMX
+#ifdef QCOM_ICS_COMPAT
 #include <gralloc_priv.h>
 #endif
 
@@ -100,7 +100,8 @@ const static int64_t kBufferFilledEventTimeOutNs = 3000000000LL;
 // component in question is buggy or not.
 const static uint32_t kMaxColorFormatSupported = 1000;
 
-#ifdef QCOM_LEGACY_OMX
+#ifdef QCOM_ICS_COMPAT
+static const int QOMX_COLOR_FormatYUV420PackedSemiPlanar64x32Tile2m8ka = 0x7FA30C03;
 static const int OMX_QCOM_COLOR_FormatYVU420SemiPlanar = 0x7FA30C00;
 #endif
 
@@ -109,6 +110,37 @@ static sp<MediaSource> Make##name(const sp<MediaSource> &source, const sp<MetaDa
     return new name(source, meta); \
 }
 
+#ifdef QCOM_LEGACY_OMX
+class ColorFormatInfo {
+    private:
+        enum {
+            LOCAL = 0,
+            REMOTE = 1,
+            END = 2
+        };
+        static const int32_t preferredColorFormat[END];
+    public:
+        static int32_t getPreferredColorFormat(bool isLocal) {
+            char colorformat[10]="";
+            if(!property_get("sf.debug.colorformat", colorformat, NULL)){
+                if(isLocal) {
+                    return preferredColorFormat[LOCAL];
+                }
+                return preferredColorFormat[REMOTE];
+            } else {
+                if(!strcmp(colorformat, "yamato")) {
+                    return QOMX_COLOR_FormatYVU420PackedSemiPlanar32m4ka;
+                }
+                return preferredColorFormat[LOCAL];
+            }
+        }
+};
+
+const int32_t ColorFormatInfo::preferredColorFormat[] = {
+    OMX_QCOM_COLOR_FormatYVU420SemiPlanar,
+    OMX_QCOM_COLOR_FormatYVU420SemiPlanar
+};
+#endif
 #define FACTORY_REF(name) { #name, Make##name },
 
 FACTORY_CREATE_ENCODER(AACEncoder)
@@ -885,11 +917,6 @@ status_t OMXCodec::setVideoPortFormatType(
 
 static size_t getFrameSize(
         OMX_COLOR_FORMATTYPE colorFormat, int32_t width, int32_t height) {
-
-#ifdef QCOM_LEGACY_OMX
-         return (((width + 15) & -16) * ((height + 15) & -16) * 3) / 2;
-#endif
-
     switch (colorFormat) {
         case OMX_COLOR_FormatYCbYCr:
         case OMX_COLOR_FormatCbYCrY:
@@ -912,6 +939,11 @@ static size_t getFrameSize(
         case OMX_SEC_COLOR_FormatNV12LPhysicalAddress:
 #endif
             return (width * height * 3) / 2;
+            
+#ifdef QCOM_LEGACY_OMX
+       case OMX_QCOM_COLOR_FormatYVU420SemiPlanar:
+            return (((width + 15) & -16) * ((height + 15) & -16) * 3) / 2;
+#endif
 
 #ifdef USE_SAMSUNG_COLORFORMAT
         case OMX_SEC_COLOR_FormatNV12LVirtualAddress:
@@ -1983,12 +2015,22 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
 
 #ifndef USE_SAMSUNG_COLORFORMAT
 
+#ifdef QCOM_ICS_COMPAT
+    int format = (def.format.video.eColorFormat ==
+                  OMX_QCOM_COLOR_FormatYUV420PackedSemiPlanar64x32Tile2m8ka)?
+                 HAL_PIXEL_FORMAT_YCbCr_420_SP_TILED : def.format.video.eColorFormat;
+#endif
+
     err = native_window_set_buffers_geometry(
             mNativeWindow.get(),
             def.format.video.nFrameWidth,
             def.format.video.nFrameHeight,
-            def.format.video.eColorFormat);
-
+#ifdef QCOM_ICS_COMPAT
+            format
+#else
+            def.format.video.eColorFormat
+#endif
+            );
 #else
 
     OMX_COLOR_FORMATTYPE eColorFormat;
