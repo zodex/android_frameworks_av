@@ -63,6 +63,16 @@ LOCAL_SRC_FILES:=                         \
         mp4/FragmentedMP4Parser.cpp       \
         mp4/TrackFragment.cpp             \
 
+ifeq ($(TARGET_QCOM_DISPLAY_VARIANT),caf)
+    DISPLAY := display-caf
+else
+    ifeq ($(TARGET_QCOM_DISPLAY_VARIANT),legacy)
+        DISPLAY := display-legacy
+    else
+        DISPLAY := display
+    endif
+endif
+
 LOCAL_C_INCLUDES:= \
         $(TOP)/frameworks/av/include/media/stagefright/timedtext \
         $(TOP)/frameworks/native/include/media/hardware \
@@ -71,13 +81,8 @@ LOCAL_C_INCLUDES:= \
         $(TOP)/external/tremolo \
         $(TOP)/external/openssl/include \
         $(TOP)/hardware/qcom/media/mm-core/inc \
-        $(TOP)/system/core/include
-
-ifeq ($(TARGET_QCOM_DISPLAY_VARIANT),legacy)
-        LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display-legacy/libgralloc
-else
-        LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display/libgralloc
-endif
+        $(TOP)/system/core/include \
+        $(TOP)/hardware/qcom/$(DISPLAY)/libgralloc
 
 ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
 LOCAL_SRC_FILES += \
