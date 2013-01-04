@@ -5,15 +5,12 @@ LOCAL_SRC_FILES:=                     \
         ColorConverter.cpp            \
         SoftwareRenderer.cpp
 
-ifeq ($(TARGET_QCOM_DISPLAY_VARIANT),caf)
-    DISPLAY := display-caf
+ifneq ($(TARGET_QCOM_DISPLAY_VARIANT),)
+    DISPLAY := display-$(TARGET_QCOM_DISPLAY_VARIANT)
 else
-    ifeq ($(TARGET_QCOM_DISPLAY_VARIANT),legacy)
-        DISPLAY := display-legacy
-    else
-        DISPLAY := display
-    endif
+    DISPLAY := display
 endif
+
 
 LOCAL_C_INCLUDES := \
         $(TOP)/frameworks/native/include/media/openmax \
