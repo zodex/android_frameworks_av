@@ -580,6 +580,9 @@ public:
     // Example value: "true" or "false". Read only.
     static const char KEY_VIDEO_SNAPSHOT_SUPPORTED[];
     static const char KEY_FULL_VIDEO_SNAP_SUPPORTED[];
+#if defined(CAMERA_POWERMODE) || defined(QCOM_SONY_HARDWARE)
+    static const char KEY_POWER_MODE_SUPPORTED[];
+#endif
 
 #if defined(QCOM_HARDWARE) || defined(EXYNOS4X12_ENHANCEMENTS) || defined(HAVE_ISO)
     static const char KEY_SUPPORTED_ISO_MODES[];
@@ -618,9 +621,10 @@ public:
     static const char KEY_MEMORY_COLOR_ENHANCEMENT[];
     static const char KEY_SUPPORTED_MEM_COLOR_ENHANCE_MODES[];
 
-#ifdef QCOM_SONY_HARDWARE
-	static const char KEY_POWER_MODE[];
+#if defined(CAMERA_POWERMODE) || defined(QCOM_SONY_HARDWARE)
+    static const char KEY_POWER_MODE[];
 #endif
+
     static const char KEY_ZSL[];
     static const char KEY_SUPPORTED_ZSL_MODES[];
 
@@ -849,6 +853,8 @@ public:
     static const char ISO_400[];
     static const char ISO_800[];
     static const char ISO_1600[];
+    static const char ISO_3200[];
+    static const char ISO_6400[];
     // Values for Lens Shading
     static const char LENSSHADE_ENABLE[] ;
     static const char LENSSHADE_DISABLE[] ;
@@ -906,7 +912,7 @@ public:
     static const char AE_BRACKET_HDR[];
     static const char AE_BRACKET[];
 
-#ifdef QCOM_SONY_HARDWARE
+#if defined(CAMERA_POWERMODE) || defined(QCOM_SONY_HARDWARE)
     static const char LOW_POWER[];
     static const char NORMAL_POWER[];
 #endif
@@ -948,7 +954,6 @@ public:
     void setPreviewFpsRange(int minFPS,int maxFPS);
     void setPostviewSize(int x, int y);
     void getSupportedHfrSizes(Vector<Size> &sizes) const;
-
 #ifdef ECLAIR_LIBCAMERA
     static const char ORIENTATION_LANDSCAPE[];
     static const char ORIENTATION_PORTRAIT[];
