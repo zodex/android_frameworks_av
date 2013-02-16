@@ -735,6 +735,9 @@ public:
     static const char SCENE_MODE_BACKLIGHT[];
     static const char SCENE_MODE_FLOWERS[];
     static const char SCENE_MODE_AR[];
+#ifdef QCOM_SONY_HARDWARE
+    static const char EX_SCENE_MODE_DOCUMENT[];
+#endif
 #endif
     // Applications are looking for a barcode. Camera driver will be optimized
     // for barcode reading.
@@ -936,12 +939,13 @@ public:
     static const char HDR_ENABLE[];
     static const char HDR_DISABLE[];
 
-   // Values for Redeye Reduction settings.
-   // static const char REDEYE_REDUCTION_ENABLE[];
-   // static const char REDEYE_REDUCTION_DISABLE[];
-   // Values for HDR settings.
-   //    static const char HDR_ENABLE[];
-   //    static const char HDR_DISABLE[];
+#ifdef QCOM_SONY_HARDWARE
+    static const char KEY_EX_SUPPORTED_METERING_MODES[];
+    static const char KEY_SEMC_METRY_MODE[];
+    static const char SEMC_METRY_CENTER[];
+    static const char SEMC_METRY_FRAME[];
+    static const char SEMC_METRY_SPOT[];
+#endif
 
     enum {
         CAMERA_ORIENTATION_UNKNOWN = 0,
@@ -952,6 +956,9 @@ public:
     void setOrientation(int orientation);
     void setPreviewFpsRange(int minFPS,int maxFPS);
     void getSupportedHfrSizes(Vector<Size> &sizes) const;
+#ifdef QCOM_SONY_HARDWARE
+    void getFocusAreaCenter(int *x, int *y) const;
+#endif
 #ifdef ECLAIR_LIBCAMERA
     static const char ORIENTATION_LANDSCAPE[];
     static const char ORIENTATION_PORTRAIT[];
