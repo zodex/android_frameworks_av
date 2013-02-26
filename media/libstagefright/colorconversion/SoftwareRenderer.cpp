@@ -108,10 +108,6 @@ SoftwareRenderer::SoftwareRenderer(
             break;
     }
 
-    ALOGI("Buffer color format: 0x%X", mColorFormat);
-    ALOGI("Video params: mWidth: %d, mHeight: %d, mCropWidth: %d, mCropHeight: %d, mCropTop: %d, mCropLeft: %d",
-         mWidth, mHeight, mCropWidth, mCropHeight, mCropTop, mCropLeft);
-
     CHECK(mNativeWindow != NULL);
     CHECK(mCropWidth > 0);
     CHECK(mCropHeight > 0);
