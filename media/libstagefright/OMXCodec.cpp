@@ -90,9 +90,8 @@ const static int64_t kBufferFilledEventTimeOutNs = 3000000000LL;
 // component in question is buggy or not.
 const static uint32_t kMaxColorFormatSupported = 1000;
 
-#ifdef QCOM_HARDWARE
+#ifdef QCOM_LEGACY_OMX
 static const int QOMX_COLOR_FormatYUV420PackedSemiPlanar64x32Tile2m8ka = 0x7FA30C03;
-static const int OMX_QCOM_COLOR_FormatYVU420SemiPlanar = 0x7FA30C00;
 #endif
 
 #define FACTORY_CREATE_ENCODER(name) \
@@ -100,56 +99,6 @@ static sp<MediaSource> Make##name(const sp<MediaSource> &source, const sp<MetaDa
     return new name(source, meta); \
 }
 
-#ifdef QCOM_HARDWARE
-class ColorFormatInfo {
-    private:
-        enum {
-            LOCAL = 0,
-            REMOTE = 1,
-            END = 2
-        };
-        static const int32_t preferredColorFormat[END];
-    public:
-        static int32_t getPreferredColorFormat(bool isLocal) {
-            char colorformat[10]="";
-            if(!property_get("sf.debug.colorformat", colorformat, NULL)){
-                if(isLocal) {
-                    return preferredColorFormat[LOCAL];
-                }
-                return preferredColorFormat[REMOTE];
-            } else {
-                if(!strcmp(colorformat, "yamato")) {
-                    return QOMX_COLOR_FormatYVU420PackedSemiPlanar32m4ka;
-                }
-                return preferredColorFormat[LOCAL];
-            }
-        }
-};
-
-const int32_t ColorFormatInfo::preferredColorFormat[] = {
-#ifdef TARGET7x30
-    QOMX_COLOR_FormatYUV420PackedSemiPlanar64x32Tile2m8ka,
-    QOMX_COLOR_FormatYUV420PackedSemiPlanar64x32Tile2m8ka
-#endif
-#ifdef TARGET8x60
-    QOMX_COLOR_FormatYUV420PackedSemiPlanar64x32Tile2m8ka,
-    QOMX_COLOR_FormatYUV420PackedSemiPlanar64x32Tile2m8ka
-#endif
-#ifdef TARGET7x27
-    OMX_QCOM_COLOR_FormatYVU420SemiPlanar,
-    OMX_QCOM_COLOR_FormatYVU420SemiPlanar
-    //QOMX_COLOR_FormatYVU420PackedSemiPlanar32m4ka
-#endif
-#ifdef TARGET7x27A
-    OMX_QCOM_COLOR_FormatYVU420SemiPlanar,
-    OMX_QCOM_COLOR_FormatYVU420SemiPlanar
-#endif
-#ifdef TARGET8x50
-    OMX_QCOM_COLOR_FormatYVU420SemiPlanar,
-    QOMX_COLOR_FormatYVU420PackedSemiPlanar32m4ka
-#endif
-};
-#endif
 #define FACTORY_REF(name) { #name, Make##name },
 
 FACTORY_CREATE_ENCODER(AACEncoder)
@@ -371,6 +320,7 @@ uint32_t OMXCodec::getComponentQuirks(
     }
 #endif
 #endif
+
     return quirks;
 }
 
@@ -2013,17 +1963,6 @@ status_t OMXCodec::allocateBuffersOnPort(OMX_U32 portIndex) {
     }
 
     status_t err = OK;
-#ifndef QCOM_LEGACY_OMX
-    if ((mFlags & kStoreMetaDataInVideoBuffers)
-            && portIndex == kPortIndexInput) {
-        ALOGW("Trying to enable metadata mode on encoder");
-        err = mOMX->storeMetaDataInBuffers(mNode, kPortIndexInput, OMX_TRUE);
-        if (err != OK) {
-            ALOGE("Storing meta data in video buffers is not supported");
-            return err;
-        }
-    }
-#endif
 
     OMX_PARAM_PORTDEFINITIONTYPE def;
     InitOMXParams(&def);
@@ -5516,7 +5455,13 @@ void OMXCodec::initOutputFormat(const sp<MetaData> &inputFormat) {
 
             mOutputFormat->setInt32(kKeyWidth, video_def->nFrameWidth);
             mOutputFormat->setInt32(kKeyHeight, video_def->nFrameHeight);
-            mOutputFormat->setInt32(kKeyColorFormat, video_def->eColorFormat);
+#ifdef QCOM_LEGACY_OMX
+	    // With legacy codec we get wrong color format here
+	    if (!strncmp(mComponentName, "OMX.qcom.", 9))
+	    	mOutputFormat->setInt32(kKeyColorFormat, OMX_QCOM_COLOR_FormatYVU420SemiPlanar);
+    	    else
+#endif
+	    mOutputFormat->setInt32(kKeyColorFormat, video_def->eColorFormat);
 
             if (!mIsEncoder) {
                 OMX_CONFIG_RECTTYPE rect;
