@@ -53,7 +53,9 @@
 #include <QCMetaData.h>
 #include <QOMX_AudioExtensions.h>
 #include <OMX_QCOMExtns.h>
+#include "include/QCUtilityClass.h"
 #endif
+
 #include "include/avc_utils.h"
 
 #ifdef QCOM_HARDWARE
@@ -447,7 +449,14 @@ sp<MediaSource> OMXCodec::Create(
     CHECK(success);
 
     Vector<CodecNameAndQuirks> matchingCodecs;
-    findMatchingCodecs(
+
+#ifdef QCOM_HARDWARE
+    if (QCOMXCodec::useHWAACDecoder(mime)) {
+        findMatchingCodecs(mime, createEncoder,
+            "OMX.qcom.audio.decoder.multiaac", flags, &matchingCodecs);
+    } else 
+#endif
+        findMatchingCodecs(
             mime, createEncoder, matchComponentName, flags, &matchingCodecs);
 
     if (matchingCodecs.isEmpty()) {
@@ -1097,6 +1106,11 @@ void OMXCodec::setVideoInputFormat(
     CHECK(success);
     CHECK(stride != 0);
 
+#ifdef QCOM_HARDWARE
+    int32_t newFrameRate = frameRate;
+    QCUtilityClass::helper_OMXCodec_hfr(meta, frameRate, bitRate, newFrameRate);
+#endif
+
     OMX_VIDEO_CODINGTYPE compressionFormat = OMX_VIDEO_CodingUnused;
     if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_AVC, mime)) {
         compressionFormat = OMX_VIDEO_CodingAVC;
@@ -1335,7 +1349,11 @@ status_t OMXCodec::setupH263EncoderParameters(const sp<MetaData>& meta) {
     h263type.nAllowedPictureTypes =
         OMX_VIDEO_PictureTypeI | OMX_VIDEO_PictureTypeP;
 
-    h263type.nPFrames = setPFramesSpacing(iFramesInterval, frameRate);
+    int32_t newFrameRate = frameRate;
+#ifdef QCOM_HARDWARE
+    QCUtilityClass::helper_OMXCodec_hfr(meta, frameRate, bitRate, newFrameRate);
+#endif
+    h263type.nPFrames = setPFramesSpacing(iFramesInterval, newFrameRate);
     if (h263type.nPFrames == 0) {
         h263type.nAllowedPictureTypes = OMX_VIDEO_PictureTypeI;
     }
@@ -1386,7 +1404,11 @@ status_t OMXCodec::setupMPEG4EncoderParameters(const sp<MetaData>& meta) {
     mpeg4type.nAllowedPictureTypes =
         OMX_VIDEO_PictureTypeI | OMX_VIDEO_PictureTypeP;
 
-    mpeg4type.nPFrames = setPFramesSpacing(iFramesInterval, frameRate);
+    int32_t newFrameRate = frameRate;
+#ifdef QCOM_HARDWARE
+    QCUtilityClass::helper_OMXCodec_hfr(meta, frameRate, bitRate, newFrameRate);
+#endif
+    mpeg4type.nPFrames = setPFramesSpacing(iFramesInterval, newFrameRate);
     if (mpeg4type.nPFrames == 0) {
         mpeg4type.nAllowedPictureTypes = OMX_VIDEO_PictureTypeI;
     }
@@ -1407,6 +1429,9 @@ status_t OMXCodec::setupMPEG4EncoderParameters(const sp<MetaData>& meta) {
     mpeg4type.eProfile = static_cast<OMX_VIDEO_MPEG4PROFILETYPE>(profileLevel.mProfile);
     mpeg4type.eLevel = static_cast<OMX_VIDEO_MPEG4LEVELTYPE>(profileLevel.mLevel);
 
+#ifdef QCOM_HARDWARE
+    QCUtilityClass::helper_OMXCodec_setBFrames(mpeg4type, mNumBFrames);
+#endif
     err = mOMX->setParameter(
             mNode, OMX_IndexParamVideoMpeg4, &mpeg4type, sizeof(mpeg4type));
     CHECK_EQ(err, (status_t)OK);
@@ -1444,7 +1469,12 @@ status_t OMXCodec::setupAVCEncoderParameters(const sp<MetaData>& meta) {
     h264type.eProfile = static_cast<OMX_VIDEO_AVCPROFILETYPE>(profileLevel.mProfile);
     h264type.eLevel = static_cast<OMX_VIDEO_AVCLEVELTYPE>(profileLevel.mLevel);
 
-    // XXX
+    int32_t newFrameRate = frameRate;
+#ifdef QCOM_HARDWARE
+    QCUtilityClass::helper_OMXCodec_hfr(meta, frameRate, bitRate, newFrameRate);
+#endif
+
+#ifndef QCOM_HARDWARE
 #ifdef USE_TI_DUCATI_H264_PROFILE
     if ((strncmp(mComponentName, "OMX.TI.DUCATI1", 14) != 0)
             && (h264type.eProfile != OMX_VIDEO_AVCProfileBaseline)) {
@@ -1452,19 +1482,22 @@ status_t OMXCodec::setupAVCEncoderParameters(const sp<MetaData>& meta) {
     if (h264type.eProfile != OMX_VIDEO_AVCProfileBaseline) {
 #endif
         ALOGW("Use baseline profile instead of %d for AVC recording",
-            h264type.eProfile);
+                h264type.eProfile);
         h264type.eProfile = OMX_VIDEO_AVCProfileBaseline;
     }
+#endif
 
     if (h264type.eProfile == OMX_VIDEO_AVCProfileBaseline) {
         h264type.nSliceHeaderSpacing = 0;
         h264type.bUseHadamard = OMX_TRUE;
         h264type.nRefFrames = 1;
         h264type.nBFrames = 0;
+#ifndef QCOM_HARDWARE
         h264type.nPFrames = setPFramesSpacing(iFramesInterval, frameRate);
         if (h264type.nPFrames == 0) {
             h264type.nAllowedPictureTypes = OMX_VIDEO_PictureTypeI;
         }
+#endif
         h264type.nRefIdx10ActiveMinus1 = 0;
         h264type.nRefIdx11ActiveMinus1 = 0;
         h264type.bEntropyCodingCABAC = OMX_FALSE;
@@ -1475,6 +1508,12 @@ status_t OMXCodec::setupAVCEncoderParameters(const sp<MetaData>& meta) {
         h264type.nCabacInitIdc = 0;
     }
 
+#ifdef QCOM_HARDWARE
+    QCUtilityClass::helper_OMXCodec_setBFrames(h264type,
+                                               mNumBFrames,
+                                               iFramesInterval,
+                                               newFrameRate);
+#endif
     if (h264type.nBFrames != 0) {
         h264type.nAllowedPictureTypes |= OMX_VIDEO_PictureTypeB;
     }
@@ -1557,6 +1596,7 @@ status_t OMXCodec::setVideoOutputFormat(
                || format.eColorFormat == OMX_QCOM_COLOR_FormatYVU420SemiPlanar
 
                || format.eColorFormat == OMX_QCOM_COLOR_FormatYUV420PackedSemiPlanar64x32Tile2m8ka
+               || format.eColorFormat == OMX_QCOM_COLOR_FormatYUV420PackedSemiPlanar32m
 #ifdef USE_SAMSUNG_COLORFORMAT
                || format.eColorFormat == OMX_SEC_COLOR_FormatNV12TPhysicalAddress
                || format.eColorFormat == OMX_SEC_COLOR_FormatNV12Tiled
@@ -1700,12 +1740,15 @@ OMXCodec::OMXCodec(
       mPaused(false),
       mNativeWindow(
               (!strncmp(componentName, "OMX.google.", 11)
-              || !strcmp(componentName, "OMX.Nvidia.mpeg2v.decode")
 #ifdef QCOM_LEGACY_OMX
               || !strncmp(componentName, "OMX.qcom",8)
 #endif
-      )
-                        ? NULL : nativeWindow) {
+              || !strcmp(componentName, "OMX.Nvidia.mpeg2v.decode"))
+                        ? NULL : nativeWindow)
+#ifdef QCOM_HARDWARE
+      ,mNumBFrames(0)
+#endif
+{
     mPortStatus[kPortIndexInput] = ENABLED;
     mPortStatus[kPortIndexOutput] = ENABLED;
 
@@ -2207,6 +2250,15 @@ status_t OMXCodec::allocateOutputBuffersFromNativeWindow() {
         return err;
     }
 
+#ifdef QCOM_BSP
+    err = mNativeWindow.get()->perform(mNativeWindow.get(),
+                             NATIVE_WINDOW_SET_BUFFERS_SIZE, def.nBufferSize);
+    if (err != 0) {
+        ALOGE("native_window_set_buffers_size failed: %s (%d)", strerror(-err),
+                -err);
+        return err;
+    }
+#endif
     CODEC_LOGV("allocating %lu buffers from a native window of size %lu on "
             "output port", def.nBufferCountActual, def.nBufferSize);
 
@@ -3083,13 +3135,30 @@ void OMXCodec::onStateChange(OMX_STATETYPE newState) {
                 mPortStatus[kPortIndexInput] = ENABLED;
                 mPortStatus[kPortIndexOutput] = ENABLED;
 
-                if ((mFlags & kEnableGrallocUsageProtected) &&
-                        mNativeWindow != NULL) {
-                    // We push enough 1x1 blank buffers to ensure that one of
-                    // them has made it to the display.  This allows the OMX
-                    // component teardown to zero out any protected buffers
-                    // without the risk of scanning out one of those buffers.
-                    pushBlankBuffersToNativeWindow();
+                if (mNativeWindow != NULL) {
+#ifdef QCOM_BSP
+                    /*
+                     * reset buffer size field with SurfaceTexture
+                     * back to 0. This will ensure proper size
+                     * buffers are allocated if the same SurfaceTexture
+                     * is re-used in a different decode session
+                     */
+                    int err =
+                        mNativeWindow.get()->perform(mNativeWindow.get(),
+                                                     NATIVE_WINDOW_SET_BUFFERS_SIZE,
+                                                     0);
+                    if (err != 0) {
+                        ALOGE("set_buffers_size failed: %s (%d)", strerror(-err),
+                             -err);
+                    }
+#endif
+                    if (mFlags & kEnableGrallocUsageProtected) {
+                        // We push enough 1x1 blank buffers to ensure that one of
+                        // them has made it to the display.  This allows the OMX
+                        // component teardown to zero out any protected buffers
+                        // without the risk of scanning out one of those buffers.
+                        pushBlankBuffersToNativeWindow();
+                    }
                 }
 
                 setState(IDLE_TO_LOADED);
@@ -3360,7 +3429,10 @@ void OMXCodec::drainInputBuffers() {
             }
 
             if (mFlags & kOnlySubmitOneInputBufferAtOneTime) {
-                break;
+#ifdef QCOM_HARDWARE
+                if (i == mNumBFrames)
+#endif
+                    break;
             }
         }
     }
@@ -3812,6 +3884,9 @@ void OMXCodec::setRawAudioFormat(
     OMX_PARAM_PORTDEFINITIONTYPE def;
     InitOMXParams(&def);
     def.nPortIndex = portIndex;
+#ifdef QCOM_ENHANCED_AUDIO
+    def.format.audio.cMIMEType = NULL;
+#endif
     status_t err = mOMX->getParameter(
             mNode, OMX_IndexParamPortDefinition, &def, sizeof(def));
     CHECK_EQ(err, (status_t)OK);
@@ -5296,6 +5371,10 @@ void OMXCodec::initOutputFormat(const sp<MetaData> &inputFormat) {
                 if (mNativeWindow != NULL) {
                      initNativeWindowCrop();
                 }
+#ifdef QCOM_HARDWARE
+            } else {
+                QCUtilityClass::helper_OMXCodec_hfr(inputFormat, mOutputFormat);
+#endif
             }
             break;
         }
