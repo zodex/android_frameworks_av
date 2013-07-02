@@ -421,26 +421,27 @@ const char CameraParameters::SKIN_TONE_ENHANCEMENT_ENABLE[] = "enable";
 const char CameraParameters::SKIN_TONE_ENHANCEMENT_DISABLE[] = "disable";
 
 const char CameraParameters::KEY_SHARPNESS[] = "sharpness";
+
+#if !defined(HTC_CAMERA_HARDWARE)
+#if defined(QCOM_HARDWARE) || defined(QCOM_LEGACY_CAM_PARAMS)
+const char CameraParameters::KEY_MIN_SHARPNESS[] = "sharpness-min";
+const char CameraParameters::KEY_MIN_CONTRAST[] = "contrast-min";
+const char CameraParameters::KEY_MIN_SATURATION[] = "saturation-min";
+#endif
+#endif
+
 #ifdef QCOM_LEGACY_CAM_PARAMS
 const char CameraParameters::KEY_MAX_SHARPNESS[] = "sharpness-max";
-const char CameraParameters::KEY_MIN_SHARPNESS[] = "sharpness-min";
+const char CameraParameters::KEY_MAX_CONTRAST[] = "contrast-max";
+const char CameraParameters::KEY_MAX_SATURATION[] = "saturation-max";
 #else
 const char CameraParameters::KEY_MAX_SHARPNESS[] = "max-sharpness";
-#endif
-const char CameraParameters::KEY_CONTRAST[] = "contrast";
-#ifdef QCOM_LEGACY_CAM_PARAMS
-const char CameraParameters::KEY_MAX_CONTRAST[] = "contrast-max";
-const char CameraParameters::KEY_MIN_CONTRAST[] = "contrast-min";
-#else
 const char CameraParameters::KEY_MAX_CONTRAST[] = "max-contrast";
-#endif
-const char CameraParameters::KEY_SATURATION[] = "saturation";
-#ifdef QCOM_LEGACY_CAM_PARAMS
-const char CameraParameters::KEY_MAX_SATURATION[] = "saturation-max";
-const char CameraParameters::KEY_MIN_SATURATION[] = "saturation-min";
-#else
 const char CameraParameters::KEY_MAX_SATURATION[] = "max-saturation";
 #endif
+
+const char CameraParameters::KEY_CONTRAST[] = "contrast";
+const char CameraParameters::KEY_SATURATION[] = "saturation";
 
 //Values for DENOISE
 const char CameraParameters::DENOISE_OFF[] = "denoise-off";
