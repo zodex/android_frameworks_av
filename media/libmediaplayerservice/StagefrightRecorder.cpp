@@ -62,9 +62,7 @@
 #endif
 
 #include "ARTPWriter.h"
-#ifdef QCOM_HARDWARE
 #include <cutils/properties.h>
-#endif
 
 namespace android {
 
