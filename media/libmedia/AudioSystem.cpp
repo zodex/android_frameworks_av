@@ -307,6 +307,11 @@ status_t AudioSystem::getLatency(audio_io_handle_t output,
                                  audio_stream_type_t streamType,
                                  uint32_t* latency)
 {
+#ifdef QCOM_HARDWARE
+    const sp<IAudioFlinger>& af = AudioSystem::get_audio_flinger();
+    if (af == 0) return PERMISSION_DENIED;
+    *latency = af->latency(output);
+#else
     OutputDescriptor *outputDesc;
 
     gLock.lock();
@@ -320,6 +325,7 @@ status_t AudioSystem::getLatency(audio_io_handle_t output,
         *latency = outputDesc->latency;
         gLock.unlock();
     }
+#endif
 
     ALOGV("getLatency() streamType %d, output %d, latency %d", streamType, output, *latency);
 
