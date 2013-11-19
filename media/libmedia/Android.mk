@@ -9,6 +9,17 @@ LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_STATIC_LIBRARY)
 
+ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES:= AudioParameter.cpp
+LOCAL_MODULE:= libaudioparameter
+LOCAL_MODULE_TAGS := optional
+LOCAL_SHARED_LIBRARIES := libutils libcutils
+
+include $(BUILD_SHARED_LIBRARY)
+endif
+
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES:= \
@@ -65,6 +76,12 @@ endif
 
 ifeq ($(BOARD_USE_SAMSUNG_SEPARATEDSTREAM),true)
 LOCAL_CFLAGS += -DUSE_SAMSUNG_SEPARATEDSTREAM
+endif
+
+ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+LOCAL_SRC_FILES += \
+    IDirectTrack.cpp \
+    IDirectTrackClient.cpp
 endif
 
 # for <cutils/atomic-inline.h>
