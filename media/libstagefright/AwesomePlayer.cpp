@@ -60,7 +60,6 @@
 #include <media/stagefright/MediaSource.h>
 #include <media/stagefright/MetaData.h>
 #include <media/stagefright/OMXCodec.h>
-#include "include/ExtendedUtils.h"
 #include <media/stagefright/Utils.h>
 
 #include <gui/IGraphicBufferProducer.h>
@@ -87,9 +86,6 @@ static int64_t kLowWaterMarkUs = 2000000ll;  // 2secs
 static int64_t kHighWaterMarkUs = 5000000ll;  // 5secs
 static const size_t kLowWaterMarkBytes = 40000;
 static const size_t kHighWaterMarkBytes = 200000;
-static const int64_t kInitFrameDurationUs = 16000;
-static const int64_t kScheduleLagGapUs = 1000;
-static const int64_t kDefaultEventDelayUs = 10000;
 #ifdef QCOM_ENHANCED_AUDIO
 int AwesomePlayer::mTunnelAliveAP = 0;
 #endif
@@ -230,7 +226,6 @@ AwesomePlayer::AwesomePlayer()
       mVideoBuffer(NULL),
       mDecryptHandle(NULL),
       mLastVideoTimeUs(-1),
-      mFrameDurationUs(kInitFrameDurationUs),
       mTextDriver(NULL),
       mOffloadAudio(false),
       mAudioTearDown(false) {
@@ -263,7 +258,6 @@ AwesomePlayer::AwesomePlayer()
 #ifdef QCOM_ENHANCED_AUDIO
     mIsTunnelAudio = false;
 #endif
-    mLateAVSyncMargin = ExtendedUtils::ShellProp::getMaxAVSyncLateMargin();
 }
 
 AwesomePlayer::~AwesomePlayer() {
@@ -290,7 +284,7 @@ void AwesomePlayer::printStats() {
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.debug.sf.statistics", value, "0");
     if (atoi(value) && mVideoSource != NULL) {
-        ALOGE("===========================\n"
+        ALOGI("===========================\n"
             "   videoDimensions(%d x %d)\n"
             "   Total Video Frames Decoded(%lld)\n"
             "   Total Video Frames Rendered(%lld)\n"
@@ -691,7 +685,7 @@ void AwesomePlayer::reset_l() {
 
     mBitrate = -1;
     mLastVideoTimeUs = -1;
-    mFrameDurationUs = kInitFrameDurationUs;
+
     {
         Mutex::Autolock autoLock(mStatsLock);
         mStats.mFd = -1;
@@ -2021,6 +2015,12 @@ status_t AwesomePlayer::initVideoDecoder(uint32_t flags) {
 
 void AwesomePlayer::finishSeekIfNecessary(int64_t videoTimeUs) {
     ATRACE_CALL();
+    if (mSeeking != NO_SEEK)
+    {
+        Mutex::Autolock autoLock(mStatsLock);
+        mStats.mLastSeekToTimeMs = mSeekTimeUs/1000;
+        printStats();
+    }
 
     if (mSeeking == SEEK_VIDEO_ONLY) {
         mSeeking = NO_SEEK;
@@ -2076,8 +2076,6 @@ void AwesomePlayer::finishSeekIfNecessary(int64_t videoTimeUs) {
 
 void AwesomePlayer::onVideoEvent() {
     ATRACE_CALL();
-    int64_t eventStartTimeUs = mSystemTimeSource.getRealTimeUs();
-    int64_t earlyGapUs = kScheduleLagGapUs; // gap for in case of event scheduling lag
     Mutex::Autolock autoLock(mLock);
     if (!mVideoEventPending) {
         // The event has been cancelled in reset_l() but had already
@@ -2187,11 +2185,7 @@ void AwesomePlayer::onVideoEvent() {
 
     int64_t timeUs;
     CHECK(mVideoBuffer->meta_data()->findInt64(kKeyTime, &timeUs));
-    if ((mLastVideoTimeUs != timeUs)
-          && (mLastVideoTimeUs > 0)
-          && (mSeeking == NO_SEEK)) {
-        mFrameDurationUs = timeUs - mLastVideoTimeUs;
-    }
+
     mLastVideoTimeUs = timeUs;
 
     if (mSeeking == SEEK_VIDEO_ONLY) {
@@ -2293,7 +2287,7 @@ void AwesomePlayer::onVideoEvent() {
             }
         }
 
-        if (latenessUs > mLateAVSyncMargin) {
+        if (latenessUs > 40000) {
             // We're more than 40ms late.
             ALOGV("we're late by %lld us (%.2f secs)",
                  latenessUs, latenessUs / 1E6);
@@ -2354,6 +2348,7 @@ void AwesomePlayer::onVideoEvent() {
         if (mFlags & PLAYING) {
             notifyIfMediaStarted_l();
         }
+
         {
             Mutex::Autolock autoLock(mStatsLock);
             logOnTime(timeUs,nowUs,latenessUs);
@@ -2364,12 +2359,12 @@ void AwesomePlayer::onVideoEvent() {
             if (atoi(value) && mVideoSource != NULL) {
                 if (mStats.mResumeDelayStartUs > 0) {
                     printStats();
-                    ALOGE("Resume Latency = %lld us", getTimeOfDayUs() - mStats.mResumeDelayStartUs);
+                    ALOGI("Resume Latency = %lld us", getTimeOfDayUs() - mStats.mResumeDelayStartUs);
                     mStats.mResumeDelayStartUs = -1;
                 }
                 if (mStats.mSeekDelayStartUs > 0) {
                     printStats();
-                    ALOGE("Seek Latency = %lld us", getTimeOfDayUs() - mStats.mSeekDelayStartUs);
+                    ALOGI("Seek Latency = %lld us", getTimeOfDayUs() - mStats.mSeekDelayStartUs);
                     mStats.mSeekDelayStartUs = -1;
                 }
             }
