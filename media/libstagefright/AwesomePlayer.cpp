@@ -1730,8 +1730,13 @@ status_t AwesomePlayer::initAudioDecoder() {
         streamType = mAudioSink->getAudioStreamType();
     }
 
-    mOffloadAudio = canOffloadStream(meta, (mVideoSource != NULL),
+    if (mDecryptHandle != NULL) {
+        ALOGV("Do not use offload playback for DRM contents");
+        mOffloadAudio = false;
+    } else {
+        mOffloadAudio = canOffloadStream(meta, (mVideoSource != NULL),
                                      isStreamingHTTP(), streamType);
+    }
 
 #ifdef QCOM_ENHANCED_AUDIO
     int32_t nchannels = 0;
@@ -3390,6 +3395,9 @@ bool AwesomePlayer::inSupportedTunnelFormats(const char * mime) {
 
 void AwesomePlayer::checkTunnelExceptions()
 {
+    if(!mIsTunnelAudio) {
+        return;
+    }
     /* exception 1: No streaming */
     if (isStreamingHTTP()) {
         ALOGV("Streaming, force disable tunnel mode playback");
@@ -3418,13 +3426,26 @@ void AwesomePlayer::checkTunnelExceptions()
         return;
     }
 
+    /* exception 4: check for  AAC mainprofile , it is not supported */
+    sp<MetaData> metaData  = mAudioTrack->getFormat();
+    const char * mime;
+    int32_t objecttype = 0;
+
+    if (metaData->findCString(kKeyMIMEType, &mime) &&
+           !strcmp(mime, MEDIA_MIMETYPE_AUDIO_AAC) &&
+           (metaData->findInt32(kKeyAACProfile, &objecttype) && (1 == objecttype))) {
+        ALOGD("FOUND AAC Main Profile, disable tunnel mode");
+        mIsTunnelAudio = false;
+        return;
+    }
+
     /* below exceptions are only for av content */
     if (mVideoTrack == NULL) return;
 
     /* exception 3: No avi having video + mp3 */
     if (mExtractor == NULL) return;
 
-    sp<MetaData> metaData = mExtractor->getMetaData();
+    metaData = mExtractor->getMetaData();
     const char * container;
 
     /*only proceed for avi content.*/
@@ -3433,7 +3454,6 @@ void AwesomePlayer::checkTunnelExceptions()
         return;
     }
 
-    const char * mime;
     metaData = mAudioTrack->getFormat();
     /*disable for av content having mp3*/
     if (metaData->findCString(kKeyMIMEType, &mime) &&
