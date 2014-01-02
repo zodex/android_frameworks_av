@@ -1125,6 +1125,21 @@ status_t AudioFlinger::setParameters(audio_io_handle_t ioHandle, const String8& 
            }
         }
 
+#ifdef QCOM_DIRECTTRACK
+        key = String8(AudioParameter::keyADSPStatus);
+        if (param.get(key, value) == NO_ERROR) {
+            ALOGV("Set keyADSPStatus:%s", value.string());
+            if (value == "ONLINE" || value == "OFFLINE") {
+               if (!mDirectAudioTracks.isEmpty()) {
+                   for (i=0; i < mDirectAudioTracks.size(); i++) {
+                       mDirectAudioTracks.valueAt(i)->stream->common.set_parameters(
+                          &mDirectAudioTracks.valueAt(i)->stream->common, keyValuePairs.string());
+                   }
+               }
+           }
+        }
+#endif
+
         // disable AEC and NS if the device is a BT SCO headset supporting those pre processings
         if (param.get(String8(AUDIO_PARAMETER_KEY_BT_NREC), value) == NO_ERROR) {
             bool btNrecIsOff = (value == AUDIO_PARAMETER_VALUE_OFF);
@@ -1554,6 +1569,7 @@ sp<IAudioRecord> AudioFlinger::openRecord(
         goto Exit;
     }
 
+#ifdef QCOM_HARDWARE
 #ifdef QCOM_DIRECTTRACK
     // Check that audio input stream accepts requested audio parameters
     inputBufferSize = getInputBufferSize(sampleRate, format, channelCount);
@@ -1563,19 +1579,21 @@ sp<IAudioRecord> AudioFlinger::openRecord(
         goto Exit;
     }
 #else
-#ifdef QCOM_HARDWARE
     if (format != AUDIO_FORMAT_PCM_16_BIT &&
             !audio_is_compress_voip_format(format) &&
             !audio_is_compress_capture_format(format)) {
-#else 
-    if (format != AUDIO_FORMAT_PCM_16_BIT) {
-#endif
         ALOGE("openRecord() invalid format %d", format);
         lStatus = BAD_VALUE;
         goto Exit;
     }
 #endif
-
+#else 
+    if (format != AUDIO_FORMAT_PCM_16_BIT) {
+        ALOGE("openRecord() invalid format %d", format);
+        lStatus = BAD_VALUE;
+        goto Exit;
+    }
+#endif
 
     // add client to list
     { // scope for mLock
