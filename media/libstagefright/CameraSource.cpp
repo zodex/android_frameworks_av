@@ -39,6 +39,8 @@
 #include <OMX_TI_IVCommon.h>
 #endif
 
+#include "include/ExtendedUtils.h"
+
 namespace android {
 
 static const int64_t CAMERA_SOURCE_TIMEOUT_NS = 3000000000LL;
