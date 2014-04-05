@@ -2408,6 +2408,10 @@ status_t MPEG4Extractor::updateAudioTrackInfoFromESDS_MPEG4Audio(
     }
 
     mLastTrack->meta->setInt32(kKeyAACProfile, objectType);
+
+    //keep AOT type
+    mLastTrack->meta->setInt32(kKeyAACAOT, objectType);
+
     uint32_t freqIndex = br.getBits(4);
 
     int32_t sampleRate = 0;
@@ -3285,6 +3289,10 @@ status_t MPEG4Source::read(
 
                 return ERROR_IO;
             }
+#ifdef ENABLE_AV_ENHANCEMENTS
+            //for AC3/EAC3 detection
+            ExtendedUtils::helper_Mpeg4ExtractorCheckAC3EAC3(mBuffer, mFormat, size);
+#endif
             CHECK(mBuffer != NULL);
             mBuffer->set_range(0, size);
             mBuffer->meta_data()->clear();

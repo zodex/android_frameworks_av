@@ -40,32 +40,6 @@ const char CameraParameters::KEY_PREVIEW_FRAME_RATE_MODE[] = "preview-frame-rate
 const char CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATE_MODES[] = "preview-frame-rate-modes";
 const char CameraParameters::KEY_PREVIEW_FRAME_RATE_AUTO_MODE[] = "frame-rate-auto";
 const char CameraParameters::KEY_PREVIEW_FRAME_RATE_FIXED_MODE[] = "frame-rate-fixed";
-#ifdef QCOM_LEGACY_CAM_PARAMS
-//Values for Continuous AF
-const char CameraParameters::CAF_OFF[] = "caf-off";
-const char CameraParameters::CAF_ON[] = "caf-on";
-//Same, for CodeAurora-based blobs
-const char CameraParameters::CAPTURE_MODE_NORMAL[] = "normal";
-const char CameraParameters::CAPTURE_MODE_BURST[] = "burst";
-const char CameraParameters::CAPTURE_MODE_CONTI_BURST[] = "contiburst";
-const char CameraParameters::CAPTURE_MODE_HDR[] = "hdr";
-const char CameraParameters::CAPTURE_MODE_HJR[] = "hjr";
-const char CameraParameters::CAPTURE_MODE_PANORAMA[] = "panorama";
-const char CameraParameters::CONTINUOUS_AF_OFF[] = "caf-off";
-const char CameraParameters::CONTINUOUS_AF_ON[] = "caf-on";
-const char CameraParameters::KEY_CONTINUOUS_AF[] = "continuous-af";
-const char CameraParameters::KEY_CAF[] = "continuous-af";
-const char CameraParameters::KEY_CAPTURE_MODE[] = "capture-mode";
-const char CameraParameters::KEY_PICTURE_COUNT[] = "picture-count";
-const char CameraParameters::KEY_MAX_BURST_PICTURE_COUNT[] = "max-burst-picture-count";
-const char CameraParameters::KEY_SUPPORTED_CONTINUOUS_AF[] = "continuous-af-mode";
-const char CameraParameters::KEY_SUPPORTED_CAF[] = "continuous-af-values";
-const char CameraParameters::KEY_SUPPORTED_CAPTURE_MODES[] = "capture-mode-values";
-const char CameraParameters::KEY_TAKING_PICTURE_ZOOM[] = "taking-picture-zoom";
-const char CameraParameters::KEY_PANORAMA_MODE[] = "panorama-mode";
-const char CameraParameters::PANORAMA_MODE_NOT_INPROGRESS[] = "not-in-progress";
-const char CameraParameters::PANORAMA_MODE_INPROGRESS[] = "in-progress";
-#endif
 #endif
 const char CameraParameters::KEY_PICTURE_SIZE[] = "picture-size";
 const char CameraParameters::KEY_SUPPORTED_PICTURE_SIZES[] = "picture-size-values";
@@ -99,7 +73,7 @@ const char CameraParameters::KEY_SUPPORTED_SCENE_MODES[] = "scene-mode-values";
 #ifdef QCOM_HARDWARE
 const char CameraParameters::KEY_SCENE_DETECT[] = "scene-detect";
 const char CameraParameters::KEY_SUPPORTED_SCENE_DETECT[] = "scene-detect-values";
-#endif QCOM_HARDWARE
+#endif
 const char CameraParameters::KEY_FLASH_MODE[] = "flash-mode";
 const char CameraParameters::KEY_SUPPORTED_FLASH_MODES[] = "flash-mode-values";
 const char CameraParameters::KEY_FOCUS_MODE[] = "focus-mode";
@@ -127,8 +101,10 @@ const char CameraParameters::KEY_SMOOTH_ZOOM_SUPPORTED[] = "smooth-zoom-supporte
 const char CameraParameters::KEY_FOCUS_DISTANCES[] = "focus-distances";
 const char CameraParameters::KEY_VIDEO_FRAME_FORMAT[] = "video-frame-format";
 #ifdef QCOM_HARDWARE
+#ifndef HAVE_ISO
 const char CameraParameters::KEY_ISO_MODE[] = "iso";
 const char CameraParameters::KEY_SUPPORTED_ISO_MODES[] = "iso-values";
+#endif
 const char CameraParameters::KEY_LENSSHADE[] = "lensshade";
 const char CameraParameters::KEY_SUPPORTED_LENSSHADE_MODES[] = "lensshade-values";
 #ifdef SAMSUNG_CAMERA_LEGACY
@@ -259,6 +235,26 @@ const char CameraParameters::OBJECT_TRACKING_OFF[] = "object-tracking";
 const char CameraParameters::TRUE[] = "true";
 const char CameraParameters::FALSE[] = "false";
 const char CameraParameters::FOCUS_DISTANCE_INFINITY[] = "Infinity";
+
+#ifdef SONY_CAM_PARAMS
+const char CameraParameters::KEY_SONY_ISO[] = "sony-iso";
+const char CameraParameters::KEY_SONY_METERING_MODE[] = "sony-metering-mode";
+const char CameraParameters::KEY_SONY_VS[] = "sony-vs";
+const char CameraParameters::KEY_SONY_MAX_BURST_SHOT_SIZE[] = "sony-max-burst-shot-size";
+const char CameraParameters::KEY_SONY_BURST_SHOT_VALUES[] = "sony-burst-shot-values";
+const char CameraParameters::KEY_SONY_VS_VALUES[] = "sony-vs-values";
+const char CameraParameters::KEY_SONY_METERING_MODE_VALUES[] = "sony-metering-mode-values";
+const char CameraParameters::KEY_SONY_AE_MODE[] = "sony-ae-mode";
+const char CameraParameters::KEY_SONY_AE_MODE_VALUES[] = "sony-ae-mode-values";
+const char CameraParameters::KEY_SONY_ISO_VALUES[] = "sony-iso-values";
+const char CameraParameters::KEY_SONY_IS[] = "sony-is";
+const char CameraParameters::KEY_SONY_IS_VALUES[] = "sony-is-values";
+const char CameraParameters::KEY_SONY_EXTENSION_VERSION[] = "sony-extension-version";
+const char CameraParameters::KEY_SONY_FOCUS_AREA[] = "sony-focus-area";
+const char CameraParameters::KEY_SONY_FOCUS_AREA_VALUES[] = "sony-focus-area-values";
+const char CameraParameters::KEY_SONY_MAX_MULTI_FOCUS_NUM[] = "sony-max-multi-focus-num";
+const char CameraParameters::KEY_SONY_SCENE_DETECT_SUPPORTED[] = "sony-scene-detect-supported";
+#endif
 
 // Values for white balance settings.
 const char CameraParameters::WHITE_BALANCE_AUTO[] = "auto";
